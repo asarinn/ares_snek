@@ -146,5 +146,8 @@ class MainWindow(QMainWindow):
         elif self.sneak_attack_enabled and self.water_subtype_enabled:
             dice = f'{weapon_dice[0] + sneak_dice[0]}d{weapon_dice[1]}'
             crit_dice = f'{crit_multiplier * weapon_dice[0] + 3 + sneak_dice[0]}d{weapon_dice[1]}'
+        else:
+            dice = 'error'
+            crit_dice = 'error'
 
         return dice, crit_dice
