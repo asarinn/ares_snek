@@ -71,6 +71,9 @@
             <property name="text">
              <string>Insipre Courage (Bard playing)</string>
             </property>
+            <property name="checked">
+             <bool>false</bool>
+            </property>
            </widget>
           </item>
           <item>
@@ -84,13 +87,6 @@
            <widget class="QCheckBox" name="raging_check_box">
             <property name="text">
              <string>Raging</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="enlarged_check_box">
-            <property name="text">
-             <string>Enlarged</string>
             </property>
            </widget>
           </item>
