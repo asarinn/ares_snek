@@ -95,11 +95,14 @@ class MainWindow(QMainWindow):
             spin_max += 1
         self.ui.num_hits_spin_box.setMaximum(spin_max)
 
+        # Get num hits
+        num_hits = int(self.ui.num_hits_spin_box.value())
+
         # Calculate Damage Bonus
-        damage = self.calculate_damage(bonus_dex) * int(self.ui.num_hits_spin_box.value())
+        damage = self.calculate_damage(bonus_dex) * num_hits
 
         # Calculate Dice
-        dice, crit_dice = self.calculate_dice(int(self.ui.num_hits_spin_box.value()))
+        dice, crit_dice = self.calculate_dice(num_hits)
 
         self.ui.damage_label.setText(f'Damage: {dice} + {damage}')
 
