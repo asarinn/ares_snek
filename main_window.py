@@ -36,6 +36,7 @@ class MainWindow(QMainWindow):
         self.ui.flanking_bonus_check_box.clicked.connect(self.flanking_toggled)
         self.ui.sneak_attack_check_box.clicked.connect(self.sneak_attack_toggled)
 
+        # Auto update when spin box toggled
         self.ui.num_hits_spin_box.valueChanged.connect(self.update_output)
 
         # Initialize output with initial settings
