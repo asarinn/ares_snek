@@ -36,6 +36,8 @@ class MainWindow(QMainWindow):
         self.ui.flanking_bonus_check_box.clicked.connect(self.flanking_toggled)
         self.ui.sneak_attack_check_box.clicked.connect(self.sneak_attack_toggled)
 
+        self.ui.num_hits_spin_box.valueChanged.connect(self.update_output)
+
         # Initialize output with initial settings
         self.update_output()
 
@@ -87,11 +89,17 @@ class MainWindow(QMainWindow):
             attack_text = attack_text + f'/{attack_bonus - (5 * (i + 1))}'
         self.ui.attack_bonus_label.setText(attack_text)
 
+        # Set new spin box max
+        spin_max = num_attacks
+        if self.haste_enabled:
+            spin_max += 1
+        self.ui.num_hits_spin_box.setMaximum(spin_max)
+
         # Calculate Damage Bonus
-        damage = self.calculate_damage(bonus_dex)
+        damage = self.calculate_damage(bonus_dex) * int(self.ui.num_hits_spin_box.value())
 
         # Calculate Dice
-        dice, crit_dice = self.calculate_dice()
+        dice, crit_dice = self.calculate_dice(int(self.ui.num_hits_spin_box.value()))
 
         self.ui.damage_label.setText(f'Damage: {dice} + {damage}')
 
@@ -127,7 +135,7 @@ class MainWindow(QMainWindow):
 
         return damage
 
-    def calculate_dice(self):
+    def calculate_dice(self, hits):
         weapon_dice = self.configuration['DAMAGE_DIE']
 
         crit_multiplier = self.configuration['WEAPON_CRITICAL_MOD']
@@ -135,17 +143,17 @@ class MainWindow(QMainWindow):
         sneak_dice = self.configuration['SNEAK_DAMAGE_DIE']
 
         if self.water_subtype_enabled and not self.sneak_attack_enabled:
-            dice = f'{weapon_dice[0]}d{weapon_dice[1]}'
-            crit_dice = f'{crit_multiplier * weapon_dice[0] + 3}d{weapon_dice[1]}'
+            dice = f'{hits * (weapon_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3)}d{weapon_dice[1]}'
         elif self.sneak_attack_enabled and not self.water_subtype_enabled:
-            dice = f'{weapon_dice[0]+sneak_dice[0]}d{weapon_dice[1]}'
-            crit_dice = f'{crit_multiplier * weapon_dice[0]+sneak_dice[0]}d{weapon_dice[1]}'
+            dice = f'{hits * (weapon_dice[0]+sneak_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0]+sneak_dice[0])}d{weapon_dice[1]}'
         elif not self.sneak_attack_enabled and not self.water_subtype_enabled:
-            dice = f'{weapon_dice[0]}d{weapon_dice[1]}'
-            crit_dice = f'{crit_multiplier * weapon_dice[0]}d{weapon_dice[1]}'
+            dice = f'{hits * (weapon_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0])}d{weapon_dice[1]}'
         elif self.sneak_attack_enabled and self.water_subtype_enabled:
-            dice = f'{weapon_dice[0] + sneak_dice[0]}d{weapon_dice[1]}'
-            crit_dice = f'{crit_multiplier * weapon_dice[0] + 3 + sneak_dice[0]}d{weapon_dice[1]}'
+            dice = f'{hits * (weapon_dice[0] + sneak_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3 + sneak_dice[0])}d{weapon_dice[1]}'
         else:
             dice = 'error'
             crit_dice = 'error'
