@@ -8,7 +8,7 @@ from PyQt5.QtCore import QObject
 from main_window import MainWindow
 
 
-class BorbinSmash(QObject):
+class AresSnek(QObject):
     def __init__(self):
         super().__init__()
 
@@ -21,7 +21,7 @@ class BorbinSmash(QObject):
 
 
 # Create instance of main control class
-instance = BorbinSmash()
+instance = AresSnek()
 
 # Start by showing the main window
 instance.main_window.show()
