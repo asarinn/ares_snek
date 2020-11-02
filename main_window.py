@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
             f'Critical Damage: {crit_dice} + {crit_mod * damage}')
 
     def calculate_attack_bonus(self, dex):
-        attack_bonus = self.configuration['BAB'] + self.configuration['WEAPON_BONUS'] + dex
+        attack_bonus = self.configuration['BAB'] + self.configuration['WEAPON_BONUS'] + self.configuration['WEAPON_FOCUS'] + dex
 
         if self.inspire_courage_enabled:
             attack_bonus += self.configuration['INSPIRE']
@@ -148,16 +148,16 @@ class MainWindow(QMainWindow):
 
         if self.water_subtype_enabled and not self.sneak_attack_enabled:
             dice = f'{hits * (weapon_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3)}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3 + 1)}d{weapon_dice[1]}'
         elif self.sneak_attack_enabled and not self.water_subtype_enabled:
             dice = f'{hits * (weapon_dice[0]+sneak_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0]+sneak_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0]+sneak_dice[0] + 1)}d{weapon_dice[1]}'
         elif not self.sneak_attack_enabled and not self.water_subtype_enabled:
             dice = f'{hits * (weapon_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 1)}d{weapon_dice[1]}'
         elif self.sneak_attack_enabled and self.water_subtype_enabled:
             dice = f'{hits * (weapon_dice[0] + sneak_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3 + sneak_dice[0])}d{weapon_dice[1]}'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3 + sneak_dice[0] + 1)}d{weapon_dice[1]}'
         else:
             dice = 'error'
             crit_dice = 'error'
