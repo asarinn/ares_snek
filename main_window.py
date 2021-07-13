@@ -23,8 +23,11 @@ class MainWindow(QMainWindow):
         self.raging_enabled = False
         self.charging_enabled = False
         self.flanking_enabled = False
-        self.water_subtype_enabled = False
         self.sneak_attack_enabled = False
+
+        # Storage variables for other numbers
+        self.bleed_stacks = 0
+        self.dex_mod = 0
 
         # Connections to toggle state on check box click
         self.ui.inspire_courage_check_box.clicked.connect(self.inspire_courage_toggled)
@@ -32,9 +35,11 @@ class MainWindow(QMainWindow):
         self.ui.raging_check_box.clicked.connect(self.raging_toggled)
         self.ui.charging_check_box.clicked.connect(self.charging_toggled)
         self.ui.flanking_bonus_check_box.clicked.connect(self.flanking_toggled)
-        self.ui.water_subtype_check_box.clicked.connect(self.water_subtype_toggled)
         self.ui.flanking_bonus_check_box.clicked.connect(self.flanking_toggled)
         self.ui.sneak_attack_check_box.clicked.connect(self.sneak_attack_toggled)
+        self.ui.bleed_stacks_spinbox.valueChanged.connect(self.bleed_stacks_changed)
+        self.ui.reset_stacks_button.clicked.connect(self.bleed_stacks_reset)
+        self.ui.dex_mod_spinbox.valueChanged.connect(self.dex_mod_changed)
 
         # Auto update when spin box toggled
         self.ui.num_hits_spin_box.valueChanged.connect(self.update_output)
@@ -58,10 +63,6 @@ class MainWindow(QMainWindow):
         self.charging_enabled = state
         self.update_output()
 
-    def water_subtype_toggled(self, state):
-        self.water_subtype_enabled = state
-        self.update_output()
-
     def flanking_toggled(self, state):
         self.flanking_enabled = state
         self.update_output()
@@ -70,12 +71,29 @@ class MainWindow(QMainWindow):
         self.sneak_attack_enabled = state
         self.update_output()
 
+    def bleed_stacks_changed(self, number):
+        self.bleed_stacks = number
+        self.update_output()
+
+    def bleed_stacks_reset(self):
+        self.bleed_stacks = 0
+        self.ui.bleed_stacks_spinbox.setValue(0)
+        self.update_output()
+
+    def dex_mod_changed(self, number):
+        self.dex_mod = number
+        self.update_output()
+
     def update_output(self):
         raw_dex = self.configuration['DEX']
         if self.raging_enabled:
             raw_dex += self.configuration['RAGE_DEX_BONUS']
 
-        bonus_dex = int((raw_dex - 10) / 2)
+        # Adjust for penalty or bonus dex
+        dex_adjustment = int(self.dex_mod / 2)
+
+        # Convert from raw number to bonus/mod
+        bonus_dex = int((raw_dex - 10) / 2) + dex_adjustment
 
         # Calculate Attack Bonus
         attack_bonus = self.calculate_attack_bonus(bonus_dex)
@@ -84,7 +102,7 @@ class MainWindow(QMainWindow):
         num_attacks = 1 + int((self.configuration['BAB'] - 1) / 5)
 
         attack_text = f' Attack Bonus: +{attack_bonus}'
-        if self.haste_enabled:
+        if self.haste_enabled or self.configuration['SPEED_WEAPON']:
             attack_text = attack_text + f'/{attack_bonus}'
         for i in range(num_attacks - 1):
             attack_text = attack_text + f'/{attack_bonus - (5 * (i + 1))}'
@@ -129,6 +147,8 @@ class MainWindow(QMainWindow):
         if self.sneak_attack_enabled:
             attack_bonus += self.configuration['SNEAK_ATTACK_BONUS']
 
+        attack_bonus += self.bleed_stacks
+
         return attack_bonus
 
     def calculate_damage(self, dex):
@@ -146,20 +166,19 @@ class MainWindow(QMainWindow):
 
         sneak_dice = self.configuration['SNEAK_DAMAGE_DIE']
 
-        if self.water_subtype_enabled and not self.sneak_attack_enabled:
-            dice = f'{hits * (weapon_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3 + 1)}d{weapon_dice[1]}'
-        elif self.sneak_attack_enabled and not self.water_subtype_enabled:
-            dice = f'{hits * (weapon_dice[0]+sneak_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0]+sneak_dice[0] + 1)}d{weapon_dice[1]}'
-        elif not self.sneak_attack_enabled and not self.water_subtype_enabled:
-            dice = f'{hits * (weapon_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 1)}d{weapon_dice[1]}'
-        elif self.sneak_attack_enabled and self.water_subtype_enabled:
-            dice = f'{hits * (weapon_dice[0] + sneak_dice[0])}d{weapon_dice[1]}'
-            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + 3 + sneak_dice[0] + 1)}d{weapon_dice[1]}'
+        extra_crit_dice = self.configuration["BONUS_CRIT_DICE"]
+
+        bleed_dice = self.configuration["BLEEDING_CRITICAL_DICE_PER_STACK"] * self.bleed_stacks
+
+        # Limit the bonus dice to 5 as per weapon description
+        if bleed_dice > 5:
+            bleed_dice = 5
+
+        if self.sneak_attack_enabled:
+            dice = f'{hits * (weapon_dice[0] + sneak_dice[0])}d6'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + sneak_dice[0] + extra_crit_dice + bleed_dice)}d6'
         else:
-            dice = 'error'
-            crit_dice = 'error'
+            dice = f'{hits * (weapon_dice[0])}d6'
+            crit_dice = f'{hits * (crit_multiplier * weapon_dice[0] + extra_crit_dice + bleed_dice)}d6'
 
         return dice, crit_dice
